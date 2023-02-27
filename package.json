@@ -1,0 +1,24 @@
+{
+  "name": "random-js-game",
+  "version": "1.0.0",
+  "description": "Random JS Game",
+  "source": "src/index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build",
+    "lint": "eslint . --ext .ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check": "tsc --noEmit"
+  },
+  "author": "Patryk Rajpold",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^3.55.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.34.0",
+    "parcel": "^2.8.3",
+    "typescript": "^4.9.5"
+  }
+}
