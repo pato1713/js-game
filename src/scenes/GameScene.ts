@@ -3,7 +3,11 @@ import sky from "../assets/sky.png";
 import platform from "../assets/platform.png";
 import star from "../assets/star.png";
 import bomb from "../assets/bomb.png";
-import dude from "../assets/dude.png";
+import idle from "../assets/fire-wizard/Idle_edited.png";
+import run from "../assets/fire-wizard/Run_edited.png";
+import jump from "../assets/fire-wizard/Jump_edited.png";
+import GlobalConfig, { Config } from "../GlobalConfig";
+import Player from "../entities/Player";
 
 class GameScene extends Phaser.Scene {
   cursors;
@@ -14,9 +18,13 @@ class GameScene extends Phaser.Scene {
   stars;
   bombs;
   platforms: Phaser.Physics.Arcade.StaticGroup;
+  globalConfig: Config;
+  mainPlayer: Player;
 
   constructor(config) {
     super(config);
+    this.globalConfig = GlobalConfig.getInstance();
+    this.mainPlayer = this.globalConfig.mainPlayer;
   }
 
   preload() {
@@ -24,9 +32,24 @@ class GameScene extends Phaser.Scene {
     this.load.image("ground", platform);
     this.load.image("star", star);
     this.load.image("bomb", bomb);
-    this.load.spritesheet("dude", dude, {
-      frameWidth: 32,
-      frameHeight: 48,
+    this.load.image("run", run);
+    this.load.spritesheet("running", run, {
+      frameWidth: 44,
+      frameHeight: 66,
+      spacing: 84,
+      // margin: 1,
+    });
+    this.load.spritesheet("idle_spritesheet", idle, {
+      frameWidth: 33,
+      frameHeight: 66,
+      spacing: 95,
+      // margin: 1,
+    });
+    this.load.spritesheet("jump_spritesheet", jump, {
+      frameWidth: 44,
+      frameHeight: 66,
+      spacing: 84,
+      // margin: 1,
     });
   }
 
@@ -50,39 +73,44 @@ class GameScene extends Phaser.Scene {
     this.platforms.create(1800, 120, "ground");
     this.platforms.create(400, 600, "ground");
 
-    this.player = this.physics.add.sprite(100, 450, "dude");
-    this.player.setBounce(0.2);
+    this.player = this.physics.add.sprite(100, 450, "idle_spritesheet", 0);
     this.player.setCollideWorldBounds(true);
+
     this.cursors = this.input.keyboard.createCursorKeys();
     this.bombs = this.physics.add.group();
 
-    this.cameras.main.startFollow(this.player);
-
     this.anims.create({
-      key: "left",
-      frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
+      key: "running_animation",
+      frames: this.anims.generateFrameNumbers("running", { start: 0, end: 7 }),
       frameRate: 10,
       repeat: -1,
     });
 
     this.anims.create({
-      key: "turn",
-      frames: [{ key: "dude", frame: 4 }],
-      frameRate: 20,
+      key: "idle_animation",
+      frames: this.anims.generateFrameNumbers("idle_spritesheet", {
+        start: 0,
+        end: 6,
+      }),
+      frameRate: 5,
+      repeat: -1,
     });
 
     this.anims.create({
-      key: "right",
-      frames: this.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
-      frameRate: 10,
-      repeat: -1,
+      key: "jump_animation",
+      frames: this.anims.generateFrameNumbers("jump_spritesheet", {
+        start: 0,
+        end: 8,
+      }),
+      frameRate: 7,
+      repeat: 0,
     });
 
     this.physics.add.collider(this.player, this.platforms);
 
     this.stars = this.physics.add.group({
       key: "star",
-      repeat: 11,
+      repeat: 27,
       setXY: { x: 12, y: 0, stepX: 70 },
     });
 
@@ -115,22 +143,23 @@ class GameScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-160);
-
-      this.player.anims.play("left", true);
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(160);
-
-      this.player.anims.play("right", true);
-    } else {
-      this.player.setVelocityX(0);
-
-      this.player.anims.play("turn");
-    }
-
     if (this.cursors.space.isDown && this.player.body.touching.down) {
       this.player.setVelocityY(-330);
+      this.player.anims.play("jump_animation");
+    } else if (this.cursors.left.isDown) {
+      this.player.setVelocityX(-160);
+      this.player.flipX = true;
+      if (this.player.body.touching.down)
+        this.player.anims.play("running_animation", true);
+    } else if (this.cursors.right.isDown) {
+      this.player.setVelocityX(160);
+      this.player.flipX = false;
+      if (this.player.body.touching.down)
+        this.player.anims.play("running_animation", true);
+    } else if (this.player.body.touching.down) {
+      this.player.setVelocityX(0);
+
+      this.player.anims.play("idle_animation", true);
     }
   }
 
@@ -163,7 +192,7 @@ class GameScene extends Phaser.Scene {
 
     this.player.setTint(0xff0000);
 
-    this.player.anims.play("turn");
+    this.player.anims.play("idle_animation");
 
     this.gameOver = true;
   }
